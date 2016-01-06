@@ -2,7 +2,8 @@
 # coding=utf-8
 
 import os
-import urllib, urllib2
+import urllib
+import urllib2
 import re
 import cookielib
 import time
@@ -13,7 +14,8 @@ import math
 
 DEBUG = False
 
-MAX_GROUP_NUM = 35 # 每组人数
+# 每组人数
+MAX_GROUP_NUM = 35
 
 QRImagePath = os.getcwd() + '/qrcode.jpg'
 
@@ -46,7 +48,7 @@ def getUUID():
 		'_': int(time.time()),
 	}
 
-	request = urllib2.Request(url = url, data = urllib.urlencode(params))
+	request = urllib2.Request(url=url, data=urllib.urlencode(params))
 	response = urllib2.urlopen(request)
 	data = response.read()
 
@@ -64,6 +66,7 @@ def getUUID():
 
 	return False
 
+
 def showQRImage():
 	global tip
 
@@ -73,7 +76,7 @@ def showQRImage():
 		'_': int(time.time()),
 	}
 
-	request = urllib2.Request(url = url, data = urllib.urlencode(params))
+	request = urllib2.Request(url=url, data=urllib.urlencode(params))
 	response = urllib2.urlopen(request)
 
 	tip = 1
@@ -91,12 +94,13 @@ def showQRImage():
 
 	print '请使用微信扫描二维码以登录'
 
+
 def waitForLogin():
 	global tip, base_uri, redirect_uri
 
 	url = 'https://login.weixin.qq.com/cgi-bin/mmwebwx-bin/login?tip=%s&uuid=%s&_=%s' % (tip, uuid, int(time.time()))
 
-	request = urllib2.Request(url = url)
+	request = urllib2.Request(url=url)
 	response = urllib2.urlopen(request)
 	data = response.read()
 	
@@ -108,25 +112,29 @@ def waitForLogin():
 
 	code = pm.group(1)
 
-	if code == '201': #已扫描
+	if code == '201':
+		# 已扫描
 		print '成功扫描,请在手机上点击确认以登录'
 		tip = 0
-	elif code == '200': #已登录
+	elif code == '200':
+		# 已登录
 		print '正在登录...'
 		regx = r'window.redirect_uri="(\S+?)";'
 		pm = re.search(regx, data)
 		redirect_uri = pm.group(1) + '&fun=new'
 		base_uri = redirect_uri[:redirect_uri.rfind('/')]
-	elif code == '408': #超时
+	elif code == '408':
+		# 超时
 		pass
 	# elif code == '400' or code == '500':
 
 	return code
 
+
 def login():
 	global skey, wxsid, wxuin, pass_ticket, BaseRequest
 
-	request = urllib2.Request(url = redirect_uri)
+	request = urllib2.Request(url=redirect_uri)
 	response = urllib2.urlopen(request)
 	data = response.read()
 
@@ -171,6 +179,7 @@ def login():
 
 	return True
 
+
 def webwxinit():
 
 	url = base_uri + '/webwxinit?pass_ticket=%s&skey=%s&r=%s' % (pass_ticket, skey, int(time.time()))
@@ -178,7 +187,7 @@ def webwxinit():
 		'BaseRequest': BaseRequest
 	}
 
-	request = urllib2.Request(url = url, data = json.dumps(params))
+	request = urllib2.Request(url=url, data=json.dumps(params))
 	request.add_header('ContentType', 'application/json; charset=UTF-8')
 	response = urllib2.urlopen(request)
 	data = response.read()
@@ -205,11 +214,12 @@ def webwxinit():
 		
 	return True
 
+
 def webwxgetcontact():
 	
 	url = base_uri + '/webwxgetcontact?pass_ticket=%s&skey=%s&r=%s' % (pass_ticket, skey, int(time.time()))
 
-	request = urllib2.Request(url = url)
+	request = urllib2.Request(url=url)
 	request.add_header('ContentType', 'application/json; charset=UTF-8')
 	response = urllib2.urlopen(request)
 	data = response.read()
@@ -228,22 +238,26 @@ def webwxgetcontact():
 	SpecialUsers = ['newsapp', 'fmessage', 'filehelper', 'weibo', 'qqmail', 'fmessage', 'tmessage', 'qmessage', 'qqsync', 'floatbottle', 'lbsapp', 'shakeapp', 'medianote', 'qqfriend', 'readerapp', 'blogapp', 'facebookapp', 'masssendapp', 'meishiapp', 'feedsapp', 'voip', 'blogappweixin', 'weixin', 'brandsessionholder', 'weixinreminder', 'wxid_novlwrv3lqwv11', 'gh_22b87fa7cb3c', 'officialaccounts', 'notification_messages', 'wxid_novlwrv3lqwv11', 'gh_22b87fa7cb3c', 'wxitil', 'userexperience_alarm', 'notification_messages']
 	for i in xrange(len(MemberList) - 1, -1, -1):
 		Member = MemberList[i]
-		if Member['VerifyFlag'] & 8 != 0: # 公众号/服务号
+		if Member['VerifyFlag'] & 8 != 0:
+			# 公众号/服务号
 			MemberList.remove(Member)
-		elif Member['UserName'] in SpecialUsers: # 特殊账号
+		elif Member['UserName'] in SpecialUsers:
+			# 特殊账号
 			MemberList.remove(Member)
-		elif Member['UserName'].find('@@') != -1: # 群聊
+		elif Member['UserName'].find('@@') != -1:
+			# 群聊
 			MemberList.remove(Member)
-		elif Member['UserName'] == My['UserName']: # 自己
+		elif Member['UserName'] == My['UserName']:
+			# 自己
 			MemberList.remove(Member)
 
 	return MemberList
+
 
 def createChatroom(UserNames):
 	MemberList = []
 	for UserName in UserNames:
 		MemberList.append({'UserName': UserName})
-
 
 	url = base_uri + '/webwxcreatechatroom?pass_ticket=%s&r=%s' % (pass_ticket, int(time.time()))
 	params = {
@@ -253,7 +267,7 @@ def createChatroom(UserNames):
 		'Topic': '',
 	}
 
-	request = urllib2.Request(url = url, data = json.dumps(params))
+	request = urllib2.Request(url=url, data=json.dumps(params))
 	request.add_header('ContentType', 'application/json; charset=UTF-8')
 	response = urllib2.urlopen(request)
 	data = response.read()
@@ -265,7 +279,8 @@ def createChatroom(UserNames):
 	MemberList = dic['MemberList']
 	DeletedList = []
 	for Member in MemberList:
-		if Member['MemberStatus'] == 4: #被对方删除了
+		if Member['MemberStatus'] == 4:
+			# 被对方删除了
 			DeletedList.append(Member['UserName'])
 
 	ErrMsg = dic['BaseResponse']['ErrMsg']
@@ -273,6 +288,7 @@ def createChatroom(UserNames):
 	# 	print ErrMsg
 
 	return ChatRoomName, DeletedList
+
 
 def deleteMember(ChatRoomName, UserNames):
 	url = base_uri + '/webwxupdatechatroom?fun=delmember&pass_ticket=%s' % (pass_ticket)
@@ -282,7 +298,7 @@ def deleteMember(ChatRoomName, UserNames):
 		'DelMemberList': ','.join(UserNames),
 	}
 
-	request = urllib2.Request(url = url, data = json.dumps(params))
+	request = urllib2.Request(url=url, data=json.dumps(params))
 	request.add_header('ContentType', 'application/json; charset=UTF-8')
 	response = urllib2.urlopen(request)
 	data = response.read()
@@ -300,6 +316,7 @@ def deleteMember(ChatRoomName, UserNames):
 		
 	return True
 
+
 def addMember(ChatRoomName, UserNames):
 	url = base_uri + '/webwxupdatechatroom?fun=addmember&pass_ticket=%s' % (pass_ticket)
 	params = {
@@ -308,7 +325,7 @@ def addMember(ChatRoomName, UserNames):
 		'AddMemberList': ','.join(UserNames),
 	}
 
-	request = urllib2.Request(url = url, data = json.dumps(params))
+	request = urllib2.Request(url=url, data=json.dumps(params))
 	request.add_header('ContentType', 'application/json; charset=UTF-8')
 	response = urllib2.urlopen(request)
 	data = response.read()
@@ -319,7 +336,8 @@ def addMember(ChatRoomName, UserNames):
 	MemberList = dic['MemberList']
 	DeletedList = []
 	for Member in MemberList:
-		if Member['MemberStatus'] == 4: #被对方删除了
+		if Member['MemberStatus'] == 4:
+			# 被对方删除了
 			DeletedList.append(Member['UserName'])
 
 	ErrMsg = dic['BaseResponse']['ErrMsg']
@@ -327,6 +345,7 @@ def addMember(ChatRoomName, UserNames):
 	# 	print ErrMsg
 
 	return DeletedList
+
 
 def main():
 
@@ -361,7 +380,7 @@ def main():
 	ChatRoomName = ''
 	result = []
 	print '开始查找...'
-	group_num=int(math.ceil(MemberCount / float(MAX_GROUP_NUM)))
+	group_num = int(math.ceil(MemberCount / float(MAX_GROUP_NUM)))
 	for i in xrange(0, group_num):
 		UserNames = []
 		NickNames = []
@@ -373,9 +392,9 @@ def main():
 			NickNames.append(Member['NickName'].encode('utf-8'))
 
 		# 	进度条
-		progress='-'*10
-		progress_str='%s'%''.join(map(lambda x:'#',progress[:(10*(i+1))/group_num]))
-		print '[',progress_str,''.join('-'*(10-len(progress_str))),']',
+		progress = '-' * 10
+		progress_str = '%s' % ''.join(map(lambda x: '#', progress[:(10 * (i + 1)) / group_num]))
+		print '[', progress_str, ''.join('-' * (10 - len(progress_str))), ']',
 		print '(当前,你被%d人删除,好友共%d人'%(len(result),len(MemberList)),'\r',
 
 		# print '第%s组...' % (i + 1)
@@ -402,7 +421,6 @@ def main():
 
 	# todo 删除群组
 
-
 	resultNames = []
 	for Member in MemberList:
 		if Member['UserName'] in result:
@@ -413,9 +431,10 @@ def main():
 
 	print '\n---------- 被删除的好友列表 ----------'
 	# 过滤emoji
-	resultNames=map(lambda x:re.sub(r'<span.+/span>','',x),resultNames)
+	resultNames=map(lambda x: re.sub(r'<span.+/span>', '', x), resultNames)
 	print '\n'.join(resultNames)
 	print '-----------------------------------'
+
 
 # windows下编码问题修复
 # http://blog.csdn.net/heyuxuanzee/article/details/8442718
@@ -424,7 +443,8 @@ class UnicodeStreamFilter:
 		self.target = target  
 		self.encoding = 'utf-8'  
 		self.errors = 'replace'  
-		self.encode_to = self.target.encoding  
+		self.encode_to = self.target.encoding
+
 	def write(self, s):  
 		if type(s) == str:  
 			s = s.decode('utf-8')  
